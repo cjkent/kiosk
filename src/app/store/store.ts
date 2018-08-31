@@ -25,6 +25,11 @@ export class Store<T> {
 
 export class DebugStore<T> extends Store<T> {
 
+  constructor(state: T) {
+    super(state);
+    console.info('Store created', state);
+  }
+
   dispatch(action: Action<T>) {
     super.dispatch(action);
     console.info('Dispatched action', action);
