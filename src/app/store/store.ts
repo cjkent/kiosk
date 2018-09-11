@@ -21,6 +21,10 @@ export class Store<T> {
   select<U>(selectorFn: (state: T) => U): Observable<U> {
     return this.emitter.pipe(map(state => selectorFn(state), distinctUntilChanged()));
   }
+
+  run(task: (state: T) => void) {
+    task(this.state);
+  }
 }
 
 export class DebugStore<T> extends Store<T> {
