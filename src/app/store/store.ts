@@ -18,6 +18,11 @@ export class Store<T> {
     this.emitter.next(this.state);
   }
 
+  apply(actionFn: (state: T) => T) {
+    this.state = actionFn(this.state);
+    this.emitter.next(this.state);
+  }
+
   select<U>(selectorFn: (state: T) => U): Observable<U> {
     return this.emitter.pipe(map(state => selectorFn(state), distinctUntilChanged()));
   }
