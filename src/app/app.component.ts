@@ -30,9 +30,6 @@ export class AppComponent {
 
 class IncrementAction implements Action<KioskState> {
   reduce(state: KioskState): KioskState {
-    return {
-      ...state,
-      value: state.value + 1,
-    };
+    return {...state, value: state.value + 1};
   }
 }
