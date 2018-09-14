@@ -1,5 +1,5 @@
 import {Component} from '@angular/core';
-import {Action, Store} from './store/store';
+import {Action, Store, update} from './store/store';
 import {KioskState} from './store/state';
 import {Observable} from 'rxjs';
 
@@ -24,15 +24,18 @@ export class AppComponent {
 
   onAdd(val: string) {
     const valueNum = parseFloat(val);
-    this.store.apply(state => ({...state, value: valueNum}));
+    this.store.apply(state => update(state, 'value', valueNum + state.value));
+    // this.store.apply(state => ({...state, value: valueNum + state.value}));
+  }
+
+  onSet(val: string) {
+    const valueNum = parseFloat(val);
+    this.store.update('value', valueNum);
   }
 }
 
 class IncrementAction implements Action<KioskState> {
   reduce(state: KioskState): KioskState {
-    return {
-      ...state,
-      value: state.value + 1,
-    };
+    return update(state, 'value', state.value + 1);
   }
 }
