@@ -5,6 +5,7 @@ export interface Action<T> {
   reduce(state: T): T;
 }
 
+// TODO extract Store into an interface so ChildStore can implement it?
 export class Store<T> {
 
   private readonly emitter: BehaviorSubject<T>;
@@ -25,6 +26,10 @@ export class Store<T> {
 
   select<U>(selectorFn: (state: T) => U): Observable<U> {
     return this.emitter.pipe(map(state => selectorFn(state), distinctUntilChanged()));
+  }
+
+  selectProperty<K extends keyof T, U>(key: K): Observable<T[K]> {
+    return this.emitter.pipe(map(state => state[key], distinctUntilChanged()));
   }
 
   run(task: (state: T) => void) {

@@ -15,7 +15,8 @@ export class AppComponent {
 
   constructor(store: Store<KioskState>) {
     this.store = store;
-    this.value$ = store.select(state => state.value);
+    this.value$ = store.selectProperty('value');
+    // this.value$ = store.select(state => state.value);
   }
 
   onClick() {
