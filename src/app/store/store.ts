@@ -5,12 +5,30 @@ export interface Action<T> {
   reduce(state: T): T;
 }
 
-// TODO extract Store into an interface so ChildStore can implement it?
-export class Store<T> {
+export abstract class Store<T> {
+
+  abstract dispatch(action: Action<T>);
+
+  abstract apply(actionFn: (state: T) => T);
+
+  abstract select<U>(selectorFn: (state: T) => U): Observable<U>;
+
+  abstract selectProperty<K extends keyof T, U>(key: K): Observable<T[K]>;
+
+  abstract run(task: (state: T) => void);
+
+  abstract update<K extends keyof T>(key: K, value: T[K]);
+
+  abstract child<K extends keyof T>(key: K): Store<T[K]>;
+}
+
+
+export class BaseStore<T> extends Store<T> {
 
   private readonly emitter: BehaviorSubject<T>;
 
   constructor(protected state: T) {
+    super();
     this.emitter = new BehaviorSubject(state);
   }
 
@@ -44,14 +62,13 @@ export class Store<T> {
   }
 
   child<K extends keyof T>(key: K): Store<T[K]> {
-    // TODO this is obviously not the final impl - just checking the typing
-    // TODO create ChildStore subtype? how would applying actions work?
-    // apply the action this this store's state and then call parentStore.update(key, newChildState)?
-    return new Store(this.state[key]);
+    // TODO is this safe? Can I make the signatures work?
+    // @ts-ignore
+    return new ChildStore(this, key);
   }
 }
 
-export class DebugStore<T> extends Store<T> {
+export class DebugStore<T> extends BaseStore<T> {
 
   constructor(state: T) {
     super(state);
@@ -61,7 +78,72 @@ export class DebugStore<T> extends Store<T> {
   dispatch(action: Action<T>) {
     super.dispatch(action);
     console.info('Dispatched action', action);
-    console.info('New state', this.state);
+    console.info('New state after dispatch', this.state);
+  }
+
+  apply(actionFn: (state: T) => T) {
+    super.apply(actionFn);
+    console.info('New state after apply', this.state);
+  }
+
+  update<K extends keyof T>(key: K, value: any) {
+    super.update(key, value);
+    console.info('New state after update', this.state);
+  }
+}
+
+export class ChildStore<T, P extends { [U in PK]: T }, PK extends keyof P> extends Store<T> {
+
+  constructor(private parent: Store<P>, private key: PK) {
+    super();
+  }
+
+  apply(actionFn: (state: T) => T) {
+    this.parent.run(parentState => {
+      const state = parentState[this.key];
+      const newState = actionFn(state);
+      this.parent.update(this.key, newState);
+    });
+  }
+
+  child<K extends keyof T>(key: K): Store<T[K]> {
+    // TODO can this be made to type check? Does it actually work?
+    // @ts-ignore
+    return new ChildStore(this, key);
+  }
+
+  dispatch(action: Action<T>) {
+    this.parent.run(parentState => {
+      const state = parentState[this.key];
+      const newState = action.reduce(state);
+      this.parent.update(this.key, newState);
+    });
+  }
+
+  run(task: (state: T) => void) {
+    this.parent.run(parentState => {
+      const state = parentState[this.key];
+      task(state);
+    });
+  }
+
+  select<U>(selectorFn: (state: T) => U): Observable<U> {
+    return this.parent.selectProperty(this.key).pipe(map(selectorFn));
+  }
+
+  selectProperty<K extends keyof T, U>(key: K): Observable<T[K]> {
+    return this.parent.selectProperty(this.key).pipe(map(value => value[key]));
+  }
+
+  update<K extends keyof T>(key: K, value: T[K]) {
+    this.parent.run(parentState => {
+      const state = parentState[this.key];
+      console.log('parentState', parentState);
+      // @ts-ignore
+      const newState = update(state, key, value);
+      console.log('newState', newState);
+      this.parent.update(this.key, newState);
+    });
   }
 }
 

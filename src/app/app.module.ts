@@ -1,13 +1,15 @@
-import { BrowserModule } from '@angular/platform-browser';
-import { NgModule } from '@angular/core';
+import {BrowserModule} from '@angular/platform-browser';
+import {NgModule} from '@angular/core';
 
-import { AppComponent } from './app.component';
+import {AppComponent} from './app.component';
 import {DebugStore, Store} from './store/store';
 import {INITIAL_STATE} from './store/state';
+import {TextComponent} from './text/text.component';
 
 @NgModule({
   declarations: [
-    AppComponent
+    AppComponent,
+    TextComponent
   ],
   imports: [
     BrowserModule
@@ -21,5 +23,5 @@ export class AppModule { }
 
 export function createStore() {
   return new DebugStore(INITIAL_STATE);
-  // return new Store(INITIAL_STATE);
+  // return new BaseStore(INITIAL_STATE);
 }

@@ -1,0 +1,9 @@
+<h1>
+  {{ text$ | async }}
+</h1>
+<div>
+  <input type="text" title="Value" #valueField>
+</div>
+<div>
+  <input type="button" value="Set" (click)="onSet(valueField.value)">
+</div>
