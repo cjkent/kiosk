@@ -13,7 +13,7 @@ export abstract class Store<T> {
 
   abstract select<U>(selectorFn: (state: T) => U): Observable<U>;
 
-  abstract selectProperty<K extends keyof T, U>(key: K): Observable<T[K]>;
+  abstract selectProperty<K extends keyof T>(key: K): Observable<T[K]>;
 
   abstract run(task: (state: T) => void);
 
@@ -23,7 +23,7 @@ export abstract class Store<T> {
 }
 
 
-export class BaseStore<T> extends Store<T> {
+export class RootStore<T> extends Store<T> {
 
   private readonly emitter: BehaviorSubject<T>;
 
@@ -46,7 +46,7 @@ export class BaseStore<T> extends Store<T> {
     return this.emitter.pipe(map(state => selectorFn(state), distinctUntilChanged()));
   }
 
-  selectProperty<K extends keyof T, U>(key: K): Observable<T[K]> {
+  selectProperty<K extends keyof T>(key: K): Observable<T[K]> {
     return this.emitter.pipe(map(state => state[key], distinctUntilChanged()));
   }
 
@@ -68,7 +68,7 @@ export class BaseStore<T> extends Store<T> {
   }
 }
 
-export class DebugStore<T> extends BaseStore<T> {
+export class DebugStore<T> extends RootStore<T> {
 
   constructor(state: T) {
     super(state);
@@ -131,7 +131,7 @@ export class ChildStore<T, P extends { [U in PK]: T }, PK extends keyof P> exten
     return this.parent.selectProperty(this.key).pipe(map(selectorFn));
   }
 
-  selectProperty<K extends keyof T, U>(key: K): Observable<T[K]> {
+  selectProperty<K extends keyof T>(key: K): Observable<T[K]> {
     return this.parent.selectProperty(this.key).pipe(map(value => value[key]));
   }
 

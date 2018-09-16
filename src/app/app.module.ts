@@ -25,5 +25,5 @@ export class AppModule { }
 
 export function createStore() {
   return new DebugStore(INITIAL_STATE);
-  // return new BaseStore(INITIAL_STATE);
+  // return new RootStore(INITIAL_STATE);
 }
