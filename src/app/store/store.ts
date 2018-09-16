@@ -107,7 +107,7 @@ export class ChildStore<T, P extends { [U in PK]: T }, PK extends keyof P> exten
   }
 
   child<K extends keyof T>(key: K): Store<T[K]> {
-    // TODO can this be made to type check? Does it actually work?
+    // TODO can this be made to type check?
     // @ts-ignore
     return new ChildStore(this, key);
   }
