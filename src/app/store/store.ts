@@ -138,10 +138,8 @@ export class ChildStore<T, P extends { [U in PK]: T }, PK extends keyof P> exten
   update<K extends keyof T>(key: K, value: T[K]) {
     this.parent.run(parentState => {
       const state = parentState[this.key];
-      console.log('parentState', parentState);
       // @ts-ignore
       const newState = update(state, key, value);
-      console.log('newState', newState);
       this.parent.update(this.key, newState);
     });
   }
