@@ -159,6 +159,9 @@ export function update<T extends object, K extends keyof T>(obj: T, key: K, valu
 
 export class ReduxDevtoolsStore<T> extends RootStore<T> {
 
+  // TODO this works on a Chrome stack trace - check other browsers
+  private regex = new RegExp('Error.*?\\n.*?\\n.*?(\\w+\\.\\w+ \\(.*\\))\\n').compile();
+
   // @ts-ignore
   private devTools = window.__REDUX_DEVTOOLS_EXTENSION__.connect({});
 
@@ -179,7 +182,13 @@ export class ReduxDevtoolsStore<T> extends RootStore<T> {
 
   dispatch(action: Action<T>) {
     super.dispatch(action);
-    this.devTools.send('actionName', this.state);
+    const stack = new Error().stack;
+    // console.log('stack', stack);
+    const result = this.regex.exec(stack);
+    // console.log('test', this.regex.test(stack));
+    // console.log('result', result);
+    const actionName = result ? result[1] : 'unknown';
+    this.devTools.send(actionName, this.state);
   }
 
   update<K extends keyof T>(key: K, value: any) {
