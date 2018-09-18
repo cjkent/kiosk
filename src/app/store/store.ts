@@ -168,8 +168,10 @@ export class ReduxDevtoolsStore<T> extends RootStore<T> {
     super(state);
     this.devTools.init(state);
     this.devTools.subscribe(message => {
-      if (message.type === 'DISPATCH' && message.payload.type === 'JUMP_TO_ACTION') {
+      if (message.type === 'DISPATCH' && (message.payload.type === 'JUMP_TO_ACTION' || message.payload.type === 'JUMP_TO_STATE')) {
         this.setState(JSON.parse(message.state));
+      } else {
+        console.log('message received', message);
       }
     });
   }
