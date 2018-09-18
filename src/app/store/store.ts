@@ -32,6 +32,11 @@ export class RootStore<T> extends Store<T> {
     this.emitter = new BehaviorSubject(state);
   }
 
+  protected setState(state: T) {
+    this.state = state;
+    this.emitter.next(this.state);
+  }
+
   dispatch(action: Action<T>) {
     this.state = action.reduce(this.state);
     this.emitter.next(this.state);
@@ -150,4 +155,35 @@ export function update<T extends object, K extends keyof T>(obj: T, key: K, valu
   const newObj = {...obj as object} as T;
   newObj[key] = value;
   return newObj;
+}
+
+export class ReduxDevtoolsStore<T> extends RootStore<T> {
+
+  // @ts-ignore
+  private devTools = window.__REDUX_DEVTOOLS_EXTENSION__.connect({});
+
+  constructor(state: T) {
+    super(state);
+    this.devTools.init(state);
+    this.devTools.subscribe(message => {
+      if (message.type === 'DISPATCH' && message.payload.type === 'JUMP_TO_ACTION') {
+        this.setState(JSON.parse(message.state));
+      }
+    });
+  }
+
+  apply(actionFn: (state: T) => T) {
+    super.apply(actionFn);
+    this.devTools.send('actionName', this.state);
+  }
+
+  dispatch(action: Action<T>) {
+    super.dispatch(action);
+    this.devTools.send('actionName', this.state);
+  }
+
+  update<K extends keyof T>(key: K, value: any) {
+    super.update(key, value);
+    this.devTools.send('actionName', this.state);
+  }
 }
