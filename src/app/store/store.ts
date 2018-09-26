@@ -1,11 +1,11 @@
+import {distinctUntilChanged, map} from 'rxjs/Operators';
 import {BehaviorSubject, Observable} from 'rxjs';
-import {distinctUntilChanged, map} from 'rxjs/operators';
 
 export interface Action<T> {
   reduce(state: T): T;
 }
 
-export abstract class Store<T> {
+export abstract class Store<T extends object> {
 
   abstract dispatch(action: Action<T>);
 
@@ -23,7 +23,7 @@ export abstract class Store<T> {
 }
 
 
-export class RootStore<T> extends Store<T> {
+export class RootStore<T extends object> extends Store<T> {
 
   private readonly emitter: BehaviorSubject<T>;
 
@@ -60,8 +60,6 @@ export class RootStore<T> extends Store<T> {
   }
 
   update<K extends keyof T>(key: K, value: T[K]) {
-    // Safe to ignore as the signature means this can only be called when the state is an object
-    // @ts-ignore
     this.state = update(this.state, key, value);
     this.emitter.next(this.state);
   }
@@ -73,7 +71,7 @@ export class RootStore<T> extends Store<T> {
   }
 }
 
-export class DebugStore<T> extends RootStore<T> {
+export class DebugStore<T extends object> extends RootStore<T> {
 
   constructor(state: T) {
     super(state);
@@ -97,7 +95,7 @@ export class DebugStore<T> extends RootStore<T> {
   }
 }
 
-export class ChildStore<T, P extends { [U in PK]: T }, PK extends keyof P> extends Store<T> {
+export class ChildStore<T extends object, P extends { [U in PK]: T } & object, PK extends keyof P> extends Store<T> {
 
   constructor(private parent: Store<P>, private key: PK) {
     super();
@@ -143,7 +141,6 @@ export class ChildStore<T, P extends { [U in PK]: T }, PK extends keyof P> exten
   update<K extends keyof T>(key: K, value: T[K]) {
     this.parent.run(parentState => {
       const state = parentState[this.key];
-      // @ts-ignore
       const newState = update(state, key, value);
       this.parent.update(this.key, newState);
     });
@@ -157,7 +154,7 @@ export function update<T extends object, K extends keyof T>(obj: T, key: K, valu
   return newObj;
 }
 
-export class ReduxDevtoolsStore<T> extends RootStore<T> {
+export class ReduxDevtoolsStore<T extends object> extends RootStore<T> {
 
   private regex = /.*?(\w+\.\w+ \(.+\))/;
 
@@ -168,7 +165,9 @@ export class ReduxDevtoolsStore<T> extends RootStore<T> {
     super(state);
     this.devTools.init(state);
     this.devTools.subscribe(message => {
-      if (message.type === 'DISPATCH' && (message.payload.type === 'JUMP_TO_ACTION' || message.payload.type === 'JUMP_TO_STATE')) {
+      if (message.type === 'DISPATCH' &&
+        (message.payload.type === 'JUMP_TO_ACTION' || message.payload.type === 'JUMP_TO_STATE')) {
+
         this.setState(JSON.parse(message.state));
       } else {
         console.log('message received', message);
