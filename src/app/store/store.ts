@@ -7,17 +7,17 @@ export interface Action<T> {
 
 export abstract class Store<T> {
 
-  abstract dispatch(action: Action<T>);
+  abstract dispatch(action: Action<T>): void;
 
-  abstract apply(actionFn: (state: T) => T);
+  abstract apply(actionFn: (state: T) => T): void;
 
+  abstract select(): Observable<T>;
+  abstract select<K extends keyof T>(key: K): Observable<T[K]>;
   abstract select<U>(selectorFn: (state: T) => U): Observable<U>;
 
-  abstract selectProperty<K extends keyof T>(key: K): Observable<T[K]>;
+  abstract run(task: (state: T) => void): void;
 
-  abstract run(task: (state: T) => void);
-
-  abstract update<K extends keyof T>(key: K, value: T[K]);
+  abstract update<K extends keyof T>(key: K, value: T[K]): void;
 
   abstract child<K extends keyof T>(key: K): Store<T[K]>;
 }
@@ -47,12 +47,22 @@ export class RootStore<T> extends Store<T> {
     this.emitter.next(this.state);
   }
 
-  select<U>(selectorFn: (state: T) => U): Observable<U> {
-    return this.emitter.pipe(map(state => selectorFn(state), distinctUntilChanged()));
+  select(): Observable<T>;
+  select<K extends keyof T>(): Observable<T[K]>;
+  select<U>(selectorFn: (state: T) => U): Observable<U>;
+
+  select(arg?: ((state: T) => any | keyof T)): Observable<any> | Observable<T> {
+    if (!arg) {
+      return this.emitter;
+    }
+    if (this.keyGuard(arg)) {
+      return this.emitter.pipe(map(state => state[arg], distinctUntilChanged()));
+    }
+    return this.emitter.pipe(map(state => arg(state), distinctUntilChanged()));
   }
 
-  selectProperty<K extends keyof T>(key: K): Observable<T[K]> {
-    return this.emitter.pipe(map(state => state[key], distinctUntilChanged()));
+  private keyGuard(arg: any): arg is keyof T {
+    return typeof arg === 'string';
   }
 
   run(task: (state: T) => void) {
@@ -60,8 +70,6 @@ export class RootStore<T> extends Store<T> {
   }
 
   update<K extends keyof T>(key: K, value: T[K]) {
-    // Safe to ignore as the signature means this can only be called when the state is an object
-    // @ts-ignore
     this.state = update(this.state, key, value);
     this.emitter.next(this.state);
   }
@@ -132,34 +140,45 @@ export class ChildStore<T, P extends { [U in PK]: T }, PK extends keyof P> exten
     });
   }
 
-  select<U>(selectorFn: (state: T) => U): Observable<U> {
-    return this.parent.selectProperty(this.key).pipe(map(selectorFn));
+  select(): Observable<T>;
+  select<K extends keyof T>(): Observable<T[K]>;
+  select<U>(selectorFn: (state: T) => U): Observable<U>;
+
+  select(arg?: ((state: T) => any | keyof T)): Observable<any> | Observable<T> {
+    if (!arg) {
+      return this.parent.select(this.key);
+    }
+    if (this.keyGuard(arg)) {
+      return this.parent.select(this.key).pipe(map(state => state[arg], distinctUntilChanged()));
+    }
+    return this.parent.select(this.key).pipe(map(state => arg(state), distinctUntilChanged()));
   }
 
-  selectProperty<K extends keyof T>(key: K): Observable<T[K]> {
-    return this.parent.selectProperty(this.key).pipe(map(value => value[key]));
+  private keyGuard(arg: any): arg is keyof T {
+    return typeof arg === 'string';
   }
 
   update<K extends keyof T>(key: K, value: T[K]) {
     this.parent.run(parentState => {
       const state = parentState[this.key];
-      // @ts-ignore
       const newState = update(state, key, value);
       this.parent.update(this.key, newState);
     });
   }
 }
 
-export function update<T extends object, K extends keyof T>(obj: T, key: K, value: T[K]) {
+export function update<T, K extends keyof T>(obj: T, key: K, value: T[K]) {
   // Safe to ignore as the signature means this can only be called when the state is an object
-  const newObj = {...obj as object} as T;
+  // @ts-ignore
+  const newObj = { ...obj } as T;
   newObj[key] = value;
   return newObj;
 }
 
+// TODO this captures updates in the root store
+//   would it be better to get the property name at the highest level?
+//   does there need to be a redux child store?
 export class ReduxDevtoolsStore<T> extends RootStore<T> {
-
-  private regex = /.*?(\w+\.\w+ \(.+\))/;
 
   // @ts-ignore
   private devTools = window.__REDUX_DEVTOOLS_EXTENSION__.connect({});
@@ -167,8 +186,10 @@ export class ReduxDevtoolsStore<T> extends RootStore<T> {
   constructor(state: T) {
     super(state);
     this.devTools.init(state);
-    this.devTools.subscribe(message => {
-      if (message.type === 'DISPATCH' && (message.payload.type === 'JUMP_TO_ACTION' || message.payload.type === 'JUMP_TO_STATE')) {
+    this.devTools.subscribe((message: any) => {
+      if (message.type === 'DISPATCH' &&
+        (message.payload.type === 'JUMP_TO_ACTION' || message.payload.type === 'JUMP_TO_STATE')) {
+
         this.setState(JSON.parse(message.state));
       } else {
         console.log('message received', message);
@@ -188,19 +209,20 @@ export class ReduxDevtoolsStore<T> extends RootStore<T> {
 
   update<K extends keyof T>(key: K, value: any) {
     super.update(key, value);
-    this.devTools.send(this.actionName(), this.state);
+    this.devTools.send(`update ${key}`, this.state);
   }
 
   private actionName(): string {
     const stack = new Error().stack;
-    const stackLines = stack.split(/\n/);
-    const line = stackLines[3];
-    const result = this.regex.exec(line);
-    if (result) {
-      return result[1];
-    } else {
-      console.log(stackLines);
-      return 'unknown';
-    }
+    const stackLines = stack!.split(/\n/)
+      .map(line => line.trim())
+      .filter(line => line.length > 0)
+      .filter(line => line.indexOf('Error') === -1)
+      .filter(line => line.indexOf('ReduxDevtoolsStore') === -1);
+    const firstLine = stackLines[0] || 'unknown';
+    return firstLine
+      .replace(/\s*at\s*/g, '')
+      .replace(/\(.*\)/g, '')
+      .replace(/.*\//g, '');
   }
 }
