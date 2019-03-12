@@ -15,7 +15,7 @@ export class TextComponent {
 
   constructor(store: Store<KioskState>) {
     this.store = store.child('textState');
-    this.text$ = this.store.selectProperty('text');
+    this.text$ = this.store.select('text');
   }
 
   onSet(value: string) {
