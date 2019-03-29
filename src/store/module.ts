@@ -1,56 +1,76 @@
-import {InjectionToken, ModuleWithProviders, NgModule} from '@angular/core';
-import {ChildStore, RootStore, Store} from './store';
-import {CommonModule} from '@angular/common';
+import { InjectionToken, ModuleWithProviders, NgModule } from '@angular/core';
+import { DebugStore, RootStore, Store } from './store';
+import { CommonModule } from '@angular/common';
 
-const childKeyToken = new InjectionToken('childKeyToken');
-const initialStateToken = new InjectionToken('initialStateToken');
+export type StoreType = 'standard' | 'debug';
 
-@NgModule({
-  imports: [
-    CommonModule
-  ],
-})
+export const ROOT_STORE = new InjectionToken<Store<unknown>>('RootStore');
+export const INITIAL_STATE = new InjectionToken<unknown>('Initial State');
+export const STORE_TYPE = new InjectionToken<StoreType>('Store Type');
+
+export const INITIAL_CHILD_STATE = new InjectionToken<unknown>('Initial Child State');
+export const CHILD_KEY = new InjectionToken<string>('Child Key');
+
+export function createStore<T>(initialState: T, storeType: StoreType = 'standard'): Store<T> {
+  switch (storeType) {
+    case 'standard':
+      return new RootStore(initialState);
+    case 'debug':
+      return new DebugStore(initialState);
+  }
+}
+
+export function createChildStore<T, K extends keyof T>(store: Store<T>, key: K, initialState: T[K]): Store<T[K]> {
+  store.apply(state => {
+    const stateCopy = { ...state };
+    stateCopy[key] = initialState;
+    return stateCopy;
+  });
+  return store.child(key);
+}
+
+@NgModule()
 export class StoreModule {
 
-  static forRoot(initialState: any): ModuleWithProviders<StoreModule> {
+  static forRoot<T>(initialState: T, storeType: StoreType = 'standard'): ModuleWithProviders<StoreModule> {
     return {
       ngModule: StoreModule,
       providers: [
         {
-          provide: initialStateToken,
+          provide: INITIAL_STATE,
           useValue: initialState
         },
         {
-          provide: Store,
-          deps: [initialStateToken],
-          useFactory: rootStoreFactory
+          provide: STORE_TYPE,
+          useValue: storeType
+        },
+        {
+          provide: ROOT_STORE,
+          useFactory: createStore,
+          deps: [INITIAL_STATE, STORE_TYPE]
         }
-      ],
+      ]
     };
   }
 
-  static forFeature(key: string): ModuleWithProviders<StoreModule> {
+  static forFeature(key: string, initialState: unknown): ModuleWithProviders<StoreModule> {
     return {
       ngModule: StoreModule,
       providers: [
         {
-          provide: childKeyToken,
+          provide: INITIAL_CHILD_STATE,
+          useValue: initialState
+        },
+        {
+          provide: CHILD_KEY,
           useValue: key
         },
         {
           provide: Store,
-          deps: [Store, childKeyToken],
-          useFactory: childStoreFactory
+          useFactory: createChildStore,
+          deps: [ROOT_STORE, CHILD_KEY, INITIAL_CHILD_STATE]
         }
-      ],
+      ]
     };
   }
-}
-
-export function childStoreFactory(store: Store<any>, key: string): ChildStore<any, any, any> {
-  return new ChildStore(store, key);
-}
-
-export function rootStoreFactory(initialState: any): Store<any> {
-  return new RootStore(initialState);
 }

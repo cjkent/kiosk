@@ -1,7 +1,7 @@
-import {Component} from '@angular/core';
-import {KioskState, Text2State} from '../store/state';
-import {Store} from '../store/store';
-import {Observable} from 'rxjs';
+import { Component } from '@angular/core';
+import { Observable } from 'rxjs';
+import { Store } from '../../../../src/store';
+import { KioskState, Text2State } from '../store/state';
 
 @Component({
   selector: 'app-text2',
@@ -18,7 +18,7 @@ export class Text2Component {
     this.text2$ = this.store.select('text2');
   }
 
-  onSet(value: string) {
+  onSet(value: string): void {
     this.store.update('text2', value);
   }
 }
