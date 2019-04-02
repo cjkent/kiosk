@@ -1,7 +1,7 @@
-import {Component} from '@angular/core';
-import {Action, Store, update} from './store/store';
-import {KioskState} from './store/state';
-import {Observable} from 'rxjs';
+import { Component } from '@angular/core';
+import { Observable } from 'rxjs';
+import { Action, Store, update } from '../../../src/store';
+import { KioskState } from './store/state';
 
 @Component({
   selector: 'app-root',
@@ -19,17 +19,17 @@ export class AppComponent {
     // this.value$ = store.select(state => state.value);
   }
 
-  onClick() {
+  onClick(): void {
     this.store.dispatch(new IncrementAction());
   }
 
-  onAdd(val: string) {
+  onAdd(val: string): void {
     const valueNum = parseFloat(val);
     this.store.apply(state => update(state, 'value', valueNum + state.value));
     // this.store.apply(state => ({...state, value: valueNum + state.value}));
   }
 
-  onSet(val: string) {
+  onSet(val: string): void {
     const valueNum = parseFloat(val);
     this.store.update('value', valueNum);
   }
