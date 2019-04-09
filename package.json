@@ -1,5 +1,5 @@
 {
-  "name": "kiosk",
+  "name": "@kiosk/store",
   "version": "1.0.0",
   "author": "Christopher Kent <cjkent@hotmail.com>",
   "contributors": [
