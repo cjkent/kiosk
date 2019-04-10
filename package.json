@@ -17,7 +17,7 @@
     "lint": "ng lint --format stylish",
     "build": "ng build --outputPath ng-dist/",
     "package": "ng-packagr -p package.json",
-    "deploy": "npm run package && npm publish dist/"
+    "deploy": "npm run package && npm publish dist/ --access public"
   },
   "ngPackage": {
     "lib": {
