@@ -1,6 +1,6 @@
 import { Component } from '@angular/core';
 import { Observable } from 'rxjs';
-import { Store } from '../../../../src/store';
+import { Store } from 'store';
 import { KioskState, Text2State } from '../store/state';
 
 @Component({

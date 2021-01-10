@@ -1,6 +1,6 @@
 import { Component } from '@angular/core';
 import { Observable } from 'rxjs';
-import { Action, Store, update } from '../../../src/store';
+import { Action, Store, update } from 'store';
 import { KioskState } from './store/state';
 
 @Component({

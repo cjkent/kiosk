@@ -1,6 +1,6 @@
 {
-  "name": "@kiosk/store",
-  "version": "1.0.3",
+  "name": "kiosk",
+  "version": "2.0.0",
   "author": "Christopher Kent <cjkent@hotmail.com>",
   "contributors": [
     "Roman Kolacz <roman@kolacz.io>"
@@ -17,44 +17,41 @@
     "lint": "ng lint --format stylish",
     "build": "ng build --outputPath ng-dist/",
     "package": "ng-packagr -p package.json",
-    "deploy": "npm run package && npm publish dist/ --access public"
+    "deploy": "npm run package && npm publish dist/ --access public",
+    "e2e": "ng e2e"
   },
-  "ngPackage": {
-    "lib": {
-      "entryFile": "public-api.ts"
-    }
-  },
-  "peerDependencies": {
-    "@angular/core": "^7.2.11"
+  "private": true,
+  "dependencies": {
+    "@angular/animations": "~11.0.6",
+    "@angular/common": "~11.0.6",
+    "@angular/compiler": "~11.0.6",
+    "@angular/core": "~11.0.6",
+    "@angular/forms": "~11.0.6",
+    "@angular/platform-browser": "~11.0.6",
+    "@angular/platform-browser-dynamic": "~11.0.6",
+    "@angular/router": "~11.0.6",
+    "rxjs": "~6.6.0",
+    "tslib": "^2.0.0",
+    "zone.js": "~0.10.2"
   },
   "devDependencies": {
-    "@angular-devkit/build-angular": "^0.13.5",
-    "@angular/cli": "^7.3.7",
-    "@angular/common": "^7.2.11",
-    "@angular/compiler": "^7.2.11",
-    "@angular/compiler-cli": "^7.2.11",
-    "@angular/core": "^7.2.11",
-    "@angular/language-service": "^7.2.11",
-    "@angular/platform-browser": "^7.2.11",
-    "@angular/platform-browser-dynamic": "^7.2.11",
-    "@types/jasmine": "^3.3.12",
-    "@types/jasminewd2": "^2.0.3",
-    "@types/node": "^11.12.0",
-    "codelyzer": "5.0.0",
-    "core-js": "^2.6.5",
-    "jasmine-core": "^3.3.0",
-    "jasmine-spec-reporter": "^4.2.1",
-    "karma": "^4.0.1",
-    "karma-chrome-launcher": "^2.2.0",
-    "karma-coverage-istanbul-reporter": "^2.0.0",
-    "karma-jasmine": "^2.0.1",
-    "karma-jasmine-html-reporter": "^1.4.0",
-    "ng-packagr": "^5.0.1",
-    "protractor": "^6.0.0",
-    "rxjs": "^6.4.0",
-    "ts-node": "^8.0.3",
-    "tslint": "^5.9.1",
-    "typescript": "3.2.4",
-    "zone.js": "^0.9.0"
+    "@angular-devkit/build-angular": "~0.1100.6",
+    "@angular/cli": "~11.0.6",
+    "@angular/compiler-cli": "~11.0.6",
+    "@types/jasmine": "~3.6.0",
+    "@types/node": "^12.11.1",
+    "codelyzer": "^6.0.0",
+    "jasmine-core": "~3.6.0",
+    "jasmine-spec-reporter": "~5.0.0",
+    "karma": "~5.1.0",
+    "karma-chrome-launcher": "~3.1.0",
+    "karma-coverage": "~2.0.3",
+    "karma-jasmine": "~4.0.0",
+    "karma-jasmine-html-reporter": "^1.5.0",
+    "ng-packagr": "^11.0.0",
+    "protractor": "~7.0.0",
+    "ts-node": "~8.3.0",
+    "tslint": "~6.1.0",
+    "typescript": "~4.0.2"
   }
 }

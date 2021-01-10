@@ -105,13 +105,13 @@ export class DebugStore<T> extends RootStore<T> {
   }
 }
 
-export class ChildStore<T, P extends { [U in PK]: T }, PK extends keyof P> extends Store<T> {
+export class ChildStore<P, PK extends keyof P> extends Store<P[PK]> {
 
   constructor(private parent: Store<P>, private key: PK) {
     super();
   }
 
-  apply(actionFn: (state: T) => T): void {
+  apply(actionFn: (state: P[PK]) => P[PK]): void {
     this.parent.run(parentState => {
       const state = parentState[this.key];
       const newState = actionFn(state);
@@ -119,13 +119,13 @@ export class ChildStore<T, P extends { [U in PK]: T }, PK extends keyof P> exten
     });
   }
 
-  child<K extends keyof T>(key: K): Store<T[K]> {
+  child<K extends keyof P[PK]>(key: K): Store<P[PK][K]> {
     // TODO can this be made to type check?
     // @ts-ignore
     return new ChildStore(this, key);
   }
 
-  dispatch(action: Action<T>): void {
+  dispatch(action: Action<P[PK]>): void {
     this.parent.run(parentState => {
       const state = parentState[this.key];
       const newState = action.reduce(state);
@@ -133,18 +133,18 @@ export class ChildStore<T, P extends { [U in PK]: T }, PK extends keyof P> exten
     });
   }
 
-  run(task: (state: T) => void): void {
+  run(task: (state: P[PK]) => void): void {
     this.parent.run(parentState => {
       const state = parentState[this.key];
       task(state);
     });
   }
 
-  select(): Observable<T>;
-  select<K extends keyof T>(): Observable<T[K]>;
-  select<U>(selectorFn: (state: T) => U): Observable<U>;
+  select(): Observable<P[PK]>;
+  select<K extends keyof P[PK]>(): Observable<P[PK][K]>;
+  select<U>(selectorFn: (state: P[PK]) => U): Observable<U>;
 
-  select(arg?: ((state: T) => unknown | keyof T)): Observable<unknown> | Observable<T> {
+  select(arg?: ((state: P[PK]) => unknown | keyof P[PK])): Observable<unknown> | Observable<P[PK]> {
     if (!arg) {
       return this.parent.select(this.key);
     }
@@ -154,11 +154,11 @@ export class ChildStore<T, P extends { [U in PK]: T }, PK extends keyof P> exten
     return this.parent.select(this.key).pipe(map(arg), distinctUntilChanged());
   }
 
-  private keyGuard(arg: keyof T | unknown): arg is keyof T {
+  private keyGuard(arg: keyof P[PK] | unknown): arg is keyof P[PK] {
     return typeof arg === 'string';
   }
 
-  update<K extends keyof T>(key: K, value: T[K]): void {
+  update<K extends keyof P[PK]>(key: K, value: P[PK][K]): void {
     this.parent.run(parentState => {
       const state = parentState[this.key];
       const newState = update(state, key, value);
