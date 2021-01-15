@@ -1,10 +1,14 @@
 import { BehaviorSubject, Observable } from 'rxjs';
 import { distinctUntilChanged, map } from 'rxjs/operators';
+import { Injectable } from '@angular/core';
 
 export interface Action<T> {
   reduce(state: T): T;
 }
 
+@Injectable({
+  providedIn: 'root',
+})
 export abstract class Store<T> {
 
   abstract dispatch(action: Action<T>): void;
@@ -22,7 +26,9 @@ export abstract class Store<T> {
   abstract child<K extends keyof T>(key: K): Store<T[K]>;
 }
 
-
+@Injectable({
+  providedIn: 'root',
+})
 export class RootStore<T> extends Store<T> {
 
   private readonly emitter: BehaviorSubject<T>;
@@ -48,7 +54,7 @@ export class RootStore<T> extends Store<T> {
   }
 
   select(): Observable<T>;
-  select<K extends keyof T>(): Observable<T[K]>;
+  select<K extends keyof T>(key: K): Observable<T[K]>;
   select<U>(selectorFn: (state: T) => U): Observable<U>;
 
   select(arg?: ((state: T) => unknown | keyof T)): Observable<unknown> | Observable<T> {

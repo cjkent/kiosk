@@ -1,6 +1,5 @@
 import { InjectionToken, ModuleWithProviders, NgModule } from '@angular/core';
 import { DebugStore, RootStore, Store } from './store';
-import { CommonModule } from '@angular/common';
 
 export type StoreType = 'standard' | 'debug';
 
@@ -14,6 +13,7 @@ export const CHILD_KEY = new InjectionToken<string>('Child Key');
 export function createStore<T>(initialState: T, storeType: StoreType = 'standard'): Store<T> {
   switch (storeType) {
     case 'standard':
+      console.log(`creating RootStore from initialState: ${initialState}`);
       return new RootStore(initialState);
     case 'debug':
       return new DebugStore(initialState);
@@ -45,7 +45,8 @@ export class StoreModule {
           useValue: storeType
         },
         {
-          provide: ROOT_STORE,
+          provide: Store,
+          // provide: ROOT_STORE,
           useFactory: createStore,
           deps: [INITIAL_STATE, STORE_TYPE]
         }

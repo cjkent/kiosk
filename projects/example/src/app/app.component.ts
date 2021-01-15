@@ -1,6 +1,6 @@
 import { Component } from '@angular/core';
 import { Observable } from 'rxjs';
-import { Action, Store, update } from 'store';
+import { Action, RootStore, Store, update } from 'store';
 import { KioskState } from './store/state';
 
 @Component({
@@ -14,6 +14,7 @@ export class AppComponent {
   store: Store<KioskState>;
 
   constructor(store: Store<KioskState>) {
+    console.log(`store = ${JSON.stringify(store)}`);
     this.store = store;
     this.value$ = store.select('value');
     // this.value$ = store.select(state => state.value);
