@@ -26,9 +26,6 @@ export abstract class Store<T> {
   abstract child<K extends keyof T>(key: K): Store<T[K]>;
 }
 
-@Injectable({
-  providedIn: 'root',
-})
 export class RootStore<T> extends Store<T> {
 
   private readonly emitter: BehaviorSubject<T>;

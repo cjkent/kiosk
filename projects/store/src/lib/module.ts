@@ -3,7 +3,6 @@ import { DebugStore, RootStore, Store } from './store';
 
 export type StoreType = 'standard' | 'debug';
 
-export const ROOT_STORE = new InjectionToken<Store<unknown>>('RootStore');
 export const INITIAL_STATE = new InjectionToken<unknown>('Initial State');
 export const STORE_TYPE = new InjectionToken<StoreType>('Store Type');
 
@@ -13,14 +12,16 @@ export const CHILD_KEY = new InjectionToken<string>('Child Key');
 export function createStore<T>(initialState: T, storeType: StoreType = 'standard'): Store<T> {
   switch (storeType) {
     case 'standard':
-      console.log(`creating RootStore from initialState: ${initialState}`);
+      console.log(`creating RootStore from initialState: ${JSON.stringify(initialState)}`);
       return new RootStore(initialState);
     case 'debug':
+      console.log(`creating DebugStore from initialState: ${JSON.stringify(initialState)}`);
       return new DebugStore(initialState);
   }
 }
 
 export function createChildStore<T, K extends keyof T>(store: Store<T>, key: K, initialState: T[K]): Store<T[K]> {
+  console.log(`creating child store from initialState: ${JSON.stringify(initialState)}`);
   store.apply(state => {
     const stateCopy = { ...state };
     stateCopy[key] = initialState;
@@ -46,7 +47,6 @@ export class StoreModule {
         },
         {
           provide: Store,
-          // provide: ROOT_STORE,
           useFactory: createStore,
           deps: [INITIAL_STATE, STORE_TYPE]
         }
@@ -69,7 +69,7 @@ export class StoreModule {
         {
           provide: Store,
           useFactory: createChildStore,
-          deps: [ROOT_STORE, CHILD_KEY, INITIAL_CHILD_STATE]
+          deps: [Store, CHILD_KEY, INITIAL_CHILD_STATE]
         }
       ]
     };
